@@ -1,0 +1,35 @@
+name: Deploy to DEV
+
+on:
+  push:
+    branches: [ dev ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '24'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build application
+        run: npm run build
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEV_SERVER_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan ${{ secrets.DEV_SERVER_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy Code to VPS
+        run: |
+          rsync -avz --delete ./dist/* ${{ secrets.DEV_SERVER_USER }}@${{ secrets.DEV_SERVER_HOST }}:${{ secrets.DEV_SERVER_PATH }}
