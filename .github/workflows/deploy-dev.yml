@@ -32,4 +32,4 @@ jobs:
 
       - name: Deploy Code to VPS
         run: |
-          rsync -avz --delete "ssh -vvv" ./dist/* ${{ secrets.DEV_SERVER_USER }}@${{ secrets.DEV_SERVER_HOST }}:${{ secrets.DEV_SERVER_PATH }}
+          rsync -avz --delete -e "ssh -vvv" ./dist/* ${{ secrets.DEV_SERVER_USER }}@${{ secrets.DEV_SERVER_HOST }}:${{ secrets.DEV_SERVER_PATH }}
