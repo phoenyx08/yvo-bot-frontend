@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
-
 export default function Chat({ token, onUnauthorized }) {
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState('');
@@ -37,22 +36,37 @@ export default function Chat({ token, onUnauthorized }) {
             // Add bot message placeholder
             setMessages((msgs) => [...msgs, botMessage]);
 
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
+            const findJsonObjectEnd = (str) => {
+                let depth = 0;
+                let inString = false;
+                for (let i = 0; i < str.length; i++) {
+                    const char = str[i];
+                    if (char === '"' && str[i - 1] !== '\\') {
+                        inString = !inString;
+                    }
+                    if (!inString) {
+                        if (char === '{') depth++;
+                        else if (char === '}') {
+                            depth--;
+                            if (depth === 0) return i + 1;
+                        }
+                    }
+                }
+                return -1;
+            };
 
-                buffer += decoder.decode(value, { stream: true });
+            const tryParseObjects = () => {
+                buffer = buffer.trim();
+                while (buffer.length > 0) {
+                    const endIdx = findJsonObjectEnd(buffer);
+                    if (endIdx === -1) break; // Wait for more data
 
-                // Try to extract JSON objects from the buffer
-                let boundary;
-                while ((boundary = buffer.indexOf('}{')) !== -1) {
-                    // Take the first object
-                    const jsonStr = buffer.slice(0, boundary + 1);
-                    buffer = buffer.slice(boundary + 1); // keep rest in buffer
+                    const jsonStr = buffer.slice(0, endIdx);
+                    buffer = buffer.slice(endIdx).trim();
 
                     try {
                         const parsed = JSON.parse(jsonStr);
-                        if (parsed.response) {
+                        if (parsed?.response) {
                             botMessage.content += parsed.response;
                             setMessages((msgs) => {
                                 const updated = [...msgs];
@@ -61,42 +75,40 @@ export default function Chat({ token, onUnauthorized }) {
                             });
                         }
                     } catch (err) {
-                        console.error('Parse error (split object)', err, jsonStr);
+                        console.error('Parse error', err, jsonStr);
+                        break;
                     }
                 }
+            };
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                buffer += decoder.decode(value, { stream: true });
+                tryParseObjects();
             }
 
-            // Try to parse whatever is left in buffer at the end
-            buffer = buffer.trim();
-            if (buffer) {
-                try {
-                    const parsed = JSON.parse(buffer);
-                    if (parsed.response) {
-                        botMessage.content += parsed.response;
-                        setMessages((msgs) => {
-                            const updated = [...msgs];
-                            updated[updated.length - 1] = { ...botMessage };
-                            return updated;
-                        });
-                    }
-                } catch (err) {
-                    console.error('Parse error (final buffer)', err, buffer);
-                }
-            }
+            tryParseObjects(); // Flush final
 
         } catch (err) {
             console.error(err);
-            setMessages((msgs) => [...msgs, { role: 'bot', content: 'Error: Could not get response.' }]);
+            setMessages((msgs) => [
+                ...msgs,
+                { role: 'bot', content: 'Error: Could not get response.' }
+            ]);
         }
     };
-
-
 
     return (
         <div>
             <div className="mb-4 space-y-2">
                 {messages.map((msg, i) => (
-                    <div key={i} className={`p-2 rounded ${msg.role === 'user' ? 'bg-blue-100' : 'bg-gray-100'}`}>
+                    <div
+                        key={i}
+                        className={`p-2 rounded ${
+                            msg.role === 'user' ? 'bg-blue-100' : 'bg-gray-100'
+                        }`}
+                    >
                         <strong>{msg.role === 'user' ? 'You' : 'Bot'}:</strong> {msg.content}
                     </div>
                 ))}
@@ -109,7 +121,10 @@ export default function Chat({ token, onUnauthorized }) {
                     onChange={(e) => setInput(e.target.value)}
                     placeholder="Type your message..."
                 />
-                <button className="bg-blue-600 text-white px-4 rounded" onClick={sendMessage}>
+                <button
+                    className="bg-blue-600 text-white px-4 rounded"
+                    onClick={sendMessage}
+                >
                     Send
                 </button>
             </div>
