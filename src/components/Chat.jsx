@@ -31,35 +31,29 @@ export default function Chat({ token, onUnauthorized }) {
 
             const reader = res.body.getReader();
             const decoder = new TextDecoder();
+            let buffer = '';
             let botMessage = { role: 'bot', content: '' };
 
-            // Add an empty bot message first so we can update it as chunks arrive
+            // Add bot message placeholder
             setMessages((msgs) => [...msgs, botMessage]);
 
             while (true) {
                 const { done, value } = await reader.read();
                 if (done) break;
 
-                const chunk = decoder.decode(value, { stream: true });
+                buffer += decoder.decode(value, { stream: true });
 
-                // Split on }{ in case multiple JSON objects arrive stuck together
-                const jsonStrings = chunk
-                    .split("}{")
-                    .map((part, i, arr) => {
-                        if (arr.length > 1) {
-                            if (i === 0) return part + "}";
-                            else if (i === arr.length - 1) return "{" + part;
-                            else return "{" + part + "}";
-                        }
-                        return part;
-                    });
+                // Try to extract JSON objects from the buffer
+                let boundary;
+                while ((boundary = buffer.indexOf('}{')) !== -1) {
+                    // Take the first object
+                    const jsonStr = buffer.slice(0, boundary + 1);
+                    buffer = buffer.slice(boundary + 1); // keep rest in buffer
 
-                for (const jsonString of jsonStrings) {
                     try {
-                        const parsed = JSON.parse(jsonString);
+                        const parsed = JSON.parse(jsonStr);
                         if (parsed.response) {
                             botMessage.content += parsed.response;
-                            // Update UI with new partial message
                             setMessages((msgs) => {
                                 const updated = [...msgs];
                                 updated[updated.length - 1] = { ...botMessage };
@@ -67,15 +61,35 @@ export default function Chat({ token, onUnauthorized }) {
                             });
                         }
                     } catch (err) {
-                        console.error("JSON parse error", err, jsonString);
+                        console.error('Parse error (split object)', err, jsonStr);
                     }
                 }
             }
+
+            // Try to parse whatever is left in buffer at the end
+            buffer = buffer.trim();
+            if (buffer) {
+                try {
+                    const parsed = JSON.parse(buffer);
+                    if (parsed.response) {
+                        botMessage.content += parsed.response;
+                        setMessages((msgs) => {
+                            const updated = [...msgs];
+                            updated[updated.length - 1] = { ...botMessage };
+                            return updated;
+                        });
+                    }
+                } catch (err) {
+                    console.error('Parse error (final buffer)', err, buffer);
+                }
+            }
+
         } catch (err) {
             console.error(err);
             setMessages((msgs) => [...msgs, { role: 'bot', content: 'Error: Could not get response.' }]);
         }
     };
+
 
 
     return (
