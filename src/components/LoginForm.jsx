@@ -33,7 +33,7 @@ export default function LoginForm({ onSuccess }) {
     };
 
     return (
-        <div className="p-4 border rounded">
+        <div className="p-4 border rounded text-gray-300 bg-gray-800">
             <h2 className="text-lg mb-2">Login Required</h2>
             <input
                 className="w-full mb-2 p-2 border rounded"
@@ -48,7 +48,7 @@ export default function LoginForm({ onSuccess }) {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
             />
-            <button className="bg-green-600 text-white px-4 py-2 rounded w-full" onClick={login}>
+            <button className="bg-green-900 text-gray-200 px-4 py-2 rounded w-full" onClick={login}>
                 Login
             </button>
             {err && <p className="text-red-500 mt-2">{err}</p>}

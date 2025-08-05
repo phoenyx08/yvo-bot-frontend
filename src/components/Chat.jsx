@@ -1,5 +1,12 @@
 import React, { useState } from 'react';
 const API_BASE = import.meta.env.VITE_API_BASE_URL;
+import { marked } from 'marked';
+import DOMPurify from 'dompurify';
+
+function renderMarkdown(markdown) {
+    const rawHtml = marked(markdown);
+    return DOMPurify.sanitize(rawHtml);
+}
 
 export default function Chat({ token, onUnauthorized }) {
     const [messages, setMessages] = useState([]);
@@ -101,28 +108,31 @@ export default function Chat({ token, onUnauthorized }) {
 
     return (
         <div>
-            <div className="mb-4 space-y-2">
+            <div className="mb-4 space-y-2 w-full">
                 {messages.map((msg, i) => (
                     <div
                         key={i}
-                        className={`p-2 rounded ${
-                            msg.role === 'user' ? 'bg-blue-100' : 'bg-gray-100'
+                        className={`p-2 rounded-2xl text-gray-300 ${
+                            msg.role === 'user' ? 'bg-green-950' : 'bg-gray-900'
                         }`}
                     >
-                        <strong>{msg.role === 'user' ? 'You' : 'Bot'}:</strong> {msg.content}
+                        <strong>{msg.role === 'user' ? 'You' : 'Bot'}:</strong> {' '}
+                        <span
+                            dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.content) }}
+                        />
                     </div>
                 ))}
             </div>
 
-            <div className="flex gap-2">
+            <div className="fixed bottom-0 left-0 w-full flex justify-center p-2 bg-gray-800">
                 <input
-                    className="flex-1 border p-2 rounded"
+                    className="w-full md:max-w-xl flex flex-col gap-2 p-2 border rounded-lg bg-gray-800 text-gray-100"
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     placeholder="Type your message..."
                 />
                 <button
-                    className="bg-blue-600 text-white px-4 rounded"
+                    className="bg-green-900 text-gray-200 px-4 rounded"
                     onClick={sendMessage}
                 >
                     Send
