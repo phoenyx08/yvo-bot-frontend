@@ -22,8 +22,8 @@ jobs:
 
       - name: Set ENV
         run: | 
-          - echo "VITE_API_BASE_URL=${{ secrets.DEV_SERVER_BACKEND_URL }}" >> .env
-          - echo "VITE_BASE_PATH=https://${{ secrets.DEV_SERVER_BACKEND_URL }}/yvo-bot-frontend/" >> .env
+          echo "VITE_API_BASE_URL=${{ secrets.DEV_SERVER_BACKEND_URL }}" >> .env
+          echo "VITE_BASE_PATH=https://${{ secrets.DEV_SERVER_BACKEND_URL }}/yvo-bot-frontend/" >> .env
 
       - name: Build application
         run: npm run build
