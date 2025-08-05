@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Chat from './components/Chat';
 import LoginForm from './components/LoginForm';
+import image from './assets/image.png';
 
 export default function App() {
     const [token, setToken] = useState(localStorage.getItem('jwt') || '');
@@ -13,13 +14,19 @@ export default function App() {
     };
 
     return (
-        <div className="p-6 max-w-xl mx-auto font-sans">
-            <h1 className="text-2xl mb-4">Chatbot</h1>
-            {showLogin ? (
-                <LoginForm onSuccess={handleLoginSuccess} />
-            ) : (
-                <Chat token={token} onUnauthorized={() => setShowLogin(true)} />
-            )}
+        <div>
+            <div className="p-3 fixed w-full bg-black font-sans flex items-center gap-4">
+                <img src={image} alt="Logo" className="w-12 h-auto" />
+                <h1 className="text-gray-300 text-2xl">YVO Bot</h1>
+            </div>
+
+            <div className="p-20 max-w-4xl mx-auto font-sans">
+                {showLogin ? (
+                    <LoginForm onSuccess={handleLoginSuccess} />
+                ) : (
+                    <Chat token={token} onUnauthorized={() => setShowLogin(true)} />
+                )}
+            </div>
         </div>
     );
 }
