@@ -113,10 +113,10 @@ export default function Chat({ token, onUnauthorized }) {
                     <div
                         key={i}
                         className={`p-2 rounded-2xl text-gray-300 ${
-                            msg.role === 'user' ? 'bg-green-950' : 'bg-gray-900'
+                            msg.role === 'user' ? 'bg-green-950' : 'bg-gray-800'
                         }`}
                     >
-                        <strong>{msg.role === 'user' ? 'You' : 'Bot'}:</strong> {' '}
+                        {/*<strong>{msg.role === 'user' ? 'You' : 'Bot'}:</strong> {' '}*/}
                         <span
                             dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.content) }}
                         />
