@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Chat from './components/Chat';
 import LoginForm from './components/LoginForm';
-// import image from '../public/image.png';
+import { logo } from './assets/logo';
 
 export default function App() {
     const [token, setToken] = useState(localStorage.getItem('jwt') || '');
@@ -16,7 +16,7 @@ export default function App() {
     return (
         <div>
             <div className="p-3 fixed w-full bg-black font-sans flex items-center gap-4">
-                <img src={`${import.meta.env.BASE_URL}image.png`} alt="Logo" className="w-12 h-auto" />
+                <img src={logo} alt="Logo" className="w-12 h-auto" />
                 <h1 className="text-gray-300 text-2xl">YVO Bot</h1>
             </div>
 
